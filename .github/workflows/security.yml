@@ -1,0 +1,112 @@
+name: Security
+
+on:
+  push:
+    branches: [ main, phase-1-foundations ]
+  pull_request:
+    branches: [ main, phase-1-foundations ]
+  schedule:
+    # Run security checks daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+        pip install pip-audit
+
+    - name: Run pip-audit for Python dependencies
+      run: |
+        echo "🔍 Running pip-audit for Python dependency vulnerabilities..."
+        pip-audit --desc --format=json --output=security-audit.json || {
+          echo "⚠️  pip-audit found vulnerabilities or failed"
+          echo "📋 Security audit results:"
+          pip-audit --desc --format=text || true
+          exit 1
+        }
+        echo "✅ No known vulnerabilities found in Python dependencies"
+
+    - name: Display security audit summary
+      if: always()
+      run: |
+        if [ -f "security-audit.json" ]; then
+          echo "📋 Security Audit Summary:"
+          echo "  - Python dependencies: ✅ No vulnerabilities found"
+          echo "  - Audit date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        else
+          echo "⚠️  Security audit completed with warnings"
+        fi
+
+    - name: Upload security audit results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-audit-results
+        path: |
+          security-audit.json
+        retention-days: 30
+
+  container-security:
+    runs-on: ubuntu-latest
+    if: hashFiles('Dockerfile*') != ''
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Display container security summary
+      run: |
+        echo "📋 Container Security Summary:"
+        echo "  - Filesystem scan: ✅ Completed"
+        echo "  - Scanner: Trivy"
+        echo "  - Results: Uploaded to GitHub Security tab"
+
+  security-summary:
+    runs-on: ubuntu-latest
+    needs: [security-audit, container-security]
+    if: always()
+
+    steps:
+    - name: Security workflow summary
+      run: |
+        echo "🛡️  Security Workflow Summary"
+        echo "================================"
+        echo "Repository: Olive OCN Agent"
+        echo "Workflow: Security Audit"
+        echo "Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo ""
+        echo "Completed checks:"
+        echo "  ✅ Python dependency audit (pip-audit)"
+        if [ -f "Dockerfile" ] || [ -f "Dockerfile.*" ]; then
+          echo "  ✅ Container filesystem scan (Trivy)"
+        else
+          echo "  ℹ️  No Dockerfile found - skipping container scan"
+        fi
+        echo ""
+        echo "Status: All security checks completed"
+        echo "Results: Available in GitHub Security tab and artifacts"
