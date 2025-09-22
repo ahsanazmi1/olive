@@ -20,7 +20,7 @@ def test_health_check_response_structure():
     """Test health check endpoint response structure."""
     response = client.get("/health")
     assert response.status_code == 200
-
+    
     data = response.json()
     assert isinstance(data, dict)
     assert "ok" in data

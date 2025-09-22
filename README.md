@@ -39,4 +39,8 @@ This project uses:
 
 ## License
 
+<<<<<<< HEAD
 MIT License - see [LICENSE](LICENSE) file for details.
+=======
+MIT License - see [LICENSE](LICENSE) file for details.
+>>>>>>> main
