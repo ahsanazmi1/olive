@@ -2,18 +2,17 @@
 FastAPI application for Olive service.
 """
 
+import sys
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
-
-import sys
-from pathlib import Path
 
 # Add project root to Python path for MCP imports
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from mcp.server import mcp_router
+from mcp.server import mcp_router  # noqa: E402
 
 # Create FastAPI application
 app = FastAPI(
