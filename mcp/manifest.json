@@ -1,0 +1,39 @@
+{
+  "name": "olive-mcp-server",
+  "version": "0.1.0",
+  "description": "Olive MCP server for the Open Checkout Network (OCN)",
+  "capabilities": [
+    "getStatus",
+    "listIncentives"
+  ],
+  "endpoints": {
+    "mcp": {
+      "url": "POST /mcp/invoke",
+      "description": "MCP protocol endpoint for Olive service operations"
+    }
+  },
+  "verbs": {
+    "getStatus": {
+      "description": "Get the current status of the Olive agent",
+      "args": {},
+      "returns": {
+        "ok": "boolean",
+        "agent": "string"
+      }
+    },
+    "listIncentives": {
+      "description": "List available incentives and rewards in the OCN ecosystem",
+      "args": {},
+      "returns": {
+        "incentives": "array",
+        "count": "number"
+      }
+    }
+  },
+  "metadata": {
+    "agent": "olive",
+    "ecosystem": "ocn",
+    "protocol": "mcp",
+    "maintainer": "OCN Team"
+  }
+}

@@ -6,6 +6,15 @@ from typing import Any
 
 from fastapi import FastAPI
 
+import sys
+from pathlib import Path
+
+# Add project root to Python path for MCP imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from mcp.server import mcp_router
+
 # Create FastAPI application
 app = FastAPI(
     title="Olive Service",
@@ -21,6 +30,9 @@ app = FastAPI(
         "url": "https://opensource.org/licenses/MIT",
     },
 )
+
+# Include MCP router
+app.include_router(mcp_router)
 
 
 @app.get("/health")
