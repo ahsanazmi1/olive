@@ -9,14 +9,14 @@ from olive.api import app
 client = TestClient(app)
 
 
-def test_health_check():
+def test_health_check() -> None:
     """Test health check endpoint returns correct response."""
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"ok": True, "repo": "olive"}
 
 
-def test_health_check_response_structure():
+def test_health_check_response_structure() -> None:
     """Test health check endpoint response structure."""
     response = client.get("/health")
     assert response.status_code == 200

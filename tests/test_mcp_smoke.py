@@ -9,7 +9,7 @@ from olive.api import app
 client = TestClient(app)
 
 
-def test_mcp_invoke_get_status():
+def test_mcp_invoke_get_status() -> None:
     """Test MCP getStatus verb returns correct response."""
     response = client.post("/mcp/invoke", json={"verb": "getStatus", "args": {}})
 
@@ -28,7 +28,7 @@ def test_mcp_invoke_get_status():
     assert data["data"]["agent"] == "olive"
 
 
-def test_mcp_invoke_list_incentives():
+def test_mcp_invoke_list_incentives() -> None:
     """Test MCP listIncentives verb returns correct response."""
     response = client.post("/mcp/invoke", json={"verb": "listIncentives", "args": {}})
 
@@ -75,7 +75,7 @@ def test_mcp_invoke_list_incentives():
     assert len(data["data"]["categories"]) > 0
 
 
-def test_mcp_invoke_unsupported_verb():
+def test_mcp_invoke_unsupported_verb() -> None:
     """Test MCP invoke with unsupported verb returns 400."""
     response = client.post("/mcp/invoke", json={"verb": "unsupportedVerb", "args": {}})
 
@@ -85,14 +85,14 @@ def test_mcp_invoke_unsupported_verb():
     assert "Unsupported verb" in data["detail"]
 
 
-def test_mcp_invoke_missing_verb():
+def test_mcp_invoke_missing_verb() -> None:
     """Test MCP invoke with missing verb returns 422."""
     response = client.post("/mcp/invoke", json={"args": {}})
 
     assert response.status_code == 422
 
 
-def test_mcp_invoke_response_schema_consistency():
+def test_mcp_invoke_response_schema_consistency() -> None:
     """Test that MCP responses have consistent schema."""
     verbs = ["getStatus", "listIncentives"]
 
