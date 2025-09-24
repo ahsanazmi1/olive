@@ -8,24 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project setup
-- FastAPI application with health check endpoint
-- Comprehensive test suite
-- CI/CD pipeline with GitHub Actions
-- Development tools configuration (ruff, black, mypy)
-- Documentation structure
+- Phase 2 — Explainability scaffolding
+- PR template for Phase 2 development
+
+## [Unreleased] — Phase 2
+
+### Added
+- AI-powered loyalty decision explanations
+- LLM integration for human-readable incentive reasoning
+- Explainability API endpoints for loyalty program decisions
+- Decision audit trail with explanations
+- Integration with Azure OpenAI for explanations
+- Enhanced MCP verbs for explainability features
 
 ### Changed
-- N/A
 
 ### Deprecated
-- N/A
 
 ### Removed
-- N/A
 
 ### Fixed
-- N/A
 
 ### Security
-- N/A
