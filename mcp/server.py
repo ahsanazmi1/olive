@@ -71,7 +71,7 @@ async def list_incentives() -> MCPResponse:
         MCP response with stub incentives data
     """
     # Stub incentives data for Olive service
-    incentives = [
+    incentives: list[dict[str, Any]] = [
         {
             "id": "early_adopter_bonus",
             "name": "Early Adopter Bonus",
