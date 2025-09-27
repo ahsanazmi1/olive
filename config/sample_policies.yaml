@@ -1,0 +1,60 @@
+# Sample Policy DSL for Olive Service
+# This file demonstrates the Policy DSL format for merchant routing preferences
+
+- policy_id: merchant_001_debit_preference
+  policy_name: "Debit Preference Policy"
+  description: "Merchant prefers debit rail for lower processing costs"
+  prefer_rail: "DEBIT"
+  loyalty_rebate_pct: 2.0
+  early_pay_discount_bps: 50.0
+  merchant_id: "merchant_001"
+  priority: 2
+  enabled: true
+  effective_from: "2024-01-01T00:00:00Z"
+  effective_until: "2024-12-31T23:59:59Z"
+
+- policy_id: merchant_001_early_pay_bonus
+  policy_name: "Early Payment Bonus Policy"
+  description: "Provides additional discount for early payment processing"
+  early_pay_discount_bps: 150.0
+  loyalty_rebate_pct: 1.5
+  merchant_id: "merchant_001"
+  priority: 1
+  enabled: true
+  effective_from: "2024-01-01T00:00:00Z"
+  effective_until: null
+
+- policy_id: merchant_002_ach_preference
+  policy_name: "ACH Preference Policy"
+  description: "Merchant strongly prefers ACH for cost efficiency"
+  prefer_rail: "ACH"
+  early_pay_discount_bps: 200.0
+  merchant_id: "merchant_002"
+  priority: 3
+  enabled: true
+  effective_from: "2024-01-01T00:00:00Z"
+  effective_until: null
+
+- policy_id: merchant_003_credit_rewards
+  policy_name: "Credit Card Rewards Policy"
+  description: "Merchant encourages credit card usage with rewards"
+  prefer_rail: "CREDIT"
+  loyalty_rebate_pct: 5.0
+  early_pay_discount_bps: 0.0
+  merchant_id: "merchant_003"
+  priority: 2
+  enabled: true
+  effective_from: "2024-01-01T00:00:00Z"
+  effective_until: "2024-06-30T23:59:59Z"
+
+- policy_id: global_cost_optimization
+  policy_name: "Global Cost Optimization Policy"
+  description: "Global policy to optimize processing costs across all merchants"
+  prefer_rail: "ACH"
+  early_pay_discount_bps: 100.0
+  loyalty_rebate_pct: 1.0
+  merchant_id: null  # Global policy
+  priority: 1
+  enabled: true
+  effective_from: "2024-01-01T00:00:00Z"
+  effective_until: null

@@ -1,0 +1,41 @@
+[
+  {
+    "policy_id": "json_merchant_001_debit_preference",
+    "policy_name": "JSON Debit Preference Policy",
+    "description": "Merchant prefers debit rail for lower processing costs (JSON format)",
+    "prefer_rail": "DEBIT",
+    "loyalty_rebate_pct": 2.5,
+    "early_pay_discount_bps": 75.0,
+    "merchant_id": "merchant_001",
+    "priority": 2,
+    "enabled": true,
+    "effective_from": "2024-01-01T00:00:00Z",
+    "effective_until": "2024-12-31T23:59:59Z"
+  },
+  {
+    "policy_id": "json_merchant_002_credit_rewards",
+    "policy_name": "JSON Credit Card Rewards Policy",
+    "description": "Merchant encourages credit card usage with rewards (JSON format)",
+    "prefer_rail": "CREDIT",
+    "loyalty_rebate_pct": 4.0,
+    "early_pay_discount_bps": 0.0,
+    "merchant_id": "merchant_002",
+    "priority": 3,
+    "enabled": true,
+    "effective_from": "2024-01-01T00:00:00Z",
+    "effective_until": null
+  },
+  {
+    "policy_id": "json_global_ach_optimization",
+    "policy_name": "JSON Global ACH Optimization Policy",
+    "description": "Global policy to optimize ACH processing across all merchants (JSON format)",
+    "prefer_rail": "ACH",
+    "early_pay_discount_bps": 125.0,
+    "loyalty_rebate_pct": 0.5,
+    "merchant_id": null,
+    "priority": 1,
+    "enabled": true,
+    "effective_from": "2024-01-01T00:00:00Z",
+    "effective_until": null
+  }
+]

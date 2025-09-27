@@ -135,9 +135,9 @@ The hooks include:
 Merchant policy DSL & routing knobs.
 
 ### Phase 3 — Negotiation & Live Fee Bidding
-- [ ] Policy DSL for routing (discounts, loyalty, early-pay)
-- [ ] MCP verbs to configure/retrieve policies
-- [ ] Tests for policy enforcement in negotiation flows
+- [x] Policy DSL for routing (discounts, loyalty, early-pay)
+- [x] MCP verbs to configure/retrieve policies
+- [x] Tests for policy enforcement in negotiation flows
 
 ## License
 
