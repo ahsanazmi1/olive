@@ -43,8 +43,8 @@ class PolicyLoader:
             
             # Convert rail type string to enum if present
             if "prefer_rail" in policy_data and policy_data["prefer_rail"]:
-                rail_str = policy_data["prefer_rail"].upper()
-                if rail_str in ["ACH", "DEBIT", "CREDIT"]:
+                rail_str = policy_data["prefer_rail"].lower()
+                if rail_str in ["ach", "debit", "credit"]:
                     policy_data["prefer_rail"] = rail_str
             
             return PolicyDSL(**policy_data)
