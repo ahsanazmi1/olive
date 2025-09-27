@@ -130,6 +130,15 @@ The hooks include:
 - **bandit** - Security linting
 - **yaml/json** validation
 
+## Phase 3 — Negotiation & Live Fee Bidding
+
+Merchant policy DSL & routing knobs.
+
+### Phase 3 — Negotiation & Live Fee Bidding
+- [ ] Policy DSL for routing (discounts, loyalty, early-pay)
+- [ ] MCP verbs to configure/retrieve policies
+- [ ] Tests for policy enforcement in negotiation flows
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
