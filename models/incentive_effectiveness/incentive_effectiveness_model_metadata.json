@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "trained_on": "2025-10-02T22:05:40.137733",
+  "model_type": "GradientBoostingClassifier",
+  "feature_names": [
+    "transaction_amount",
+    "customer_age_days",
+    "loyalty_tier",
+    "transaction_frequency",
+    "avg_transaction_amount",
+    "incentive_value",
+    "incentive_percentage",
+    "time_of_day",
+    "day_of_week",
+    "seasonal_factor",
+    "competitive_pressure",
+    "customer_engagement_score",
+    "previous_incentive_response_rate",
+    "merchant_trust_score",
+    "economic_indicator",
+    "incentive_type_cashback",
+    "incentive_type_points",
+    "incentive_type_discount",
+    "incentive_type_bonus",
+    "customer_segment_new",
+    "customer_segment_regular",
+    "customer_segment_vip",
+    "merchant_category_retail",
+    "merchant_category_food",
+    "merchant_category_travel",
+    "merchant_category_other",
+    "channel_online",
+    "channel_mobile",
+    "channel_in_store"
+  ],
+  "performance_metrics": {
+    "accuracy": 0.85,
+    "precision": 0.82,
+    "recall": 0.88,
+    "f1_score": 0.85
+  },
+  "training_samples": 5000
+}

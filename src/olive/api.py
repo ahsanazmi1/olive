@@ -20,6 +20,14 @@ from src.olive.policies.evaluator import get_policy_evaluator, PolicyEvaluationR
 from src.olive.policies.events import emit_policy_applied_event  # noqa: E402
 from src.olive.policies.explainer import generate_policy_explanation  # noqa: E402
 
+# Import ML-enhanced evaluator
+try:
+    from src.olive.ml_enhanced_evaluator import get_ml_enhanced_evaluator
+    ML_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ ML models not available: {e}")
+    ML_AVAILABLE = False
+
 # Create FastAPI application
 app = FastAPI(
     title="Olive Service",
@@ -49,6 +57,116 @@ async def health_check() -> dict[str, Any]:
         dict: Health status information
     """
     return {"ok": True, "repo": "olive"}
+
+
+@app.get("/incentives", response_model=Dict[str, Any])
+async def get_incentives(
+    merchant_id: str = "demo_merchant_001",
+    transaction_amount: float = 410.40,
+    channel: str = "online"
+) -> Dict[str, Any]:
+    """
+    Get available incentives and rewards for a transaction.
+    
+    Args:
+        merchant_id: Merchant identifier
+        transaction_amount: Transaction amount
+        channel: Transaction channel
+        
+    Returns:
+        Available incentives and rewards
+    """
+    # Calculate dynamic incentive values based on transaction amount
+    base_cashback_rate = 0.02  # 2% base cashback
+    category_bonus_rate = 0.03  # 3% for clothing/fashion
+    volume_threshold = 300.0
+    volume_bonus_rate = 0.01 if transaction_amount >= volume_threshold else 0.0
+    
+    total_cashback_rate = base_cashback_rate + category_bonus_rate + volume_bonus_rate
+    cashback_value = transaction_amount * total_cashback_rate
+    
+    incentives = [
+        {
+            "id": "base_cashback",
+            "name": "Base Cashback Reward",
+            "description": f"Standard {base_cashback_rate*100:.0f}% cashback on all purchases",
+            "type": "cashback",
+            "value": f"{base_cashback_rate*100:.0f}%",
+            "amount": transaction_amount * base_cashback_rate,
+            "currency": "USD",
+            "eligibility": "all_users",
+            "status": "active",
+            "expires_at": None
+        },
+        {
+            "id": "fashion_category_bonus",
+            "name": "Fashion Category Bonus",
+            "description": f"Extra {category_bonus_rate*100:.0f}% cashback on clothing and fashion purchases",
+            "type": "cashback",
+            "value": f"{category_bonus_rate*100:.0f}%",
+            "amount": transaction_amount * category_bonus_rate,
+            "currency": "USD",
+            "eligibility": "clothing_category",
+            "status": "active",
+            "expires_at": "2024-12-31T23:59:59Z"
+        },
+        {
+            "id": "volume_discount",
+            "name": "Volume Bonus",
+            "description": f"Additional {volume_bonus_rate*100:.0f}% cashback for purchases over ${volume_threshold}",
+            "type": "cashback",
+            "value": f"{volume_bonus_rate*100:.0f}%" if volume_bonus_rate > 0 else "0%",
+            "amount": transaction_amount * volume_bonus_rate,
+            "currency": "USD",
+            "eligibility": f"purchases_over_{volume_threshold}",
+            "status": "active" if volume_bonus_rate > 0 else "inactive",
+            "expires_at": None
+        },
+        {
+            "id": "loyalty_points",
+            "name": "Loyalty Points",
+            "description": "Earn loyalty points for every dollar spent",
+            "type": "points",
+            "value": f"{int(transaction_amount)} points",
+            "amount": transaction_amount,
+            "currency": "points",
+            "eligibility": "all_users",
+            "status": "active",
+            "expires_at": None
+        },
+        {
+            "id": "early_adopter_bonus",
+            "name": "Early Adopter Bonus",
+            "description": "Special bonus for early participants in the OCN ecosystem",
+            "type": "bonus",
+            "value": "$5.00",
+            "amount": 5.0,
+            "currency": "USD",
+            "eligibility": "new_users",
+            "status": "active",
+            "expires_at": "2024-12-31T23:59:59Z"
+        }
+    ]
+    
+    # Filter active incentives
+    active_incentives = [inc for inc in incentives if inc["status"] == "active"]
+    
+    return {
+        "success": True,
+        "data": {
+            "incentives": active_incentives,
+            "count": len(active_incentives),
+            "total_active": len(active_incentives),
+            "total_value": sum(inc["amount"] for inc in active_incentives if inc["type"] == "cashback"),
+            "categories": list(set(inc["type"] for inc in active_incentives)),
+            "summary": {
+                "total_cashback_rate": f"{total_cashback_rate*100:.1f}%",
+                "total_cashback_value": cashback_value,
+                "loyalty_points": int(transaction_amount),
+                "bonus_value": 5.0 if any(inc["id"] == "early_adopter_bonus" for inc in active_incentives) else 0.0
+            }
+        }
+    }
 
 
 # Policy DSL API Endpoints
@@ -180,8 +298,11 @@ async def evaluate_policies(request: PolicyEvaluationAPIRequest) -> Dict[str, An
             currency=request.currency,
         )
         
-        # Evaluate policies
-        evaluator = get_policy_evaluator()
+        # Evaluate policies (ML-enhanced if available)
+        if ML_AVAILABLE:
+            evaluator = get_ml_enhanced_evaluator()
+        else:
+            evaluator = get_policy_evaluator()
         evaluation_response = evaluator.evaluate_policies(eval_request)
         
         # Generate explanation
@@ -223,6 +344,49 @@ async def evaluate_policies(request: PolicyEvaluationAPIRequest) -> Dict[str, An
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to evaluate policies: {str(e)}"
+        )
+
+
+@app.get("/ml/status", response_model=Dict[str, Any])
+async def get_ml_status():
+    """Get ML model status and configuration."""
+    if not ML_AVAILABLE:
+        return {
+            "ml_enabled": False,
+            "error": "ML models not available"
+        }
+    
+    try:
+        from src.olive.ml.policy_optimization import get_policy_optimizer
+        from src.olive.ml.incentive_effectiveness import get_effectiveness_predictor
+        
+        policy_optimizer = get_policy_optimizer()
+        effectiveness_predictor = get_effectiveness_predictor()
+        
+        return {
+            "ml_enabled": True,
+            "ml_weight": 0.7,  # From MLEnhancedPolicyEvaluator
+            "models": {
+                "policy_optimization": {
+                    "loaded": policy_optimizer.is_loaded,
+                    "model_type": policy_optimizer.metadata.get("model_type", "unknown"),
+                    "version": policy_optimizer.metadata.get("version", "unknown"),
+                    "training_date": policy_optimizer.metadata.get("trained_on", "unknown"),
+                    "features": len(policy_optimizer.feature_names) if policy_optimizer.feature_names else 0
+                },
+                "incentive_effectiveness": {
+                    "loaded": effectiveness_predictor.is_loaded,
+                    "model_type": effectiveness_predictor.metadata.get("model_type", "unknown"),
+                    "version": effectiveness_predictor.metadata.get("version", "unknown"),
+                    "training_date": effectiveness_predictor.metadata.get("trained_on", "unknown"),
+                    "features": len(effectiveness_predictor.feature_names) if effectiveness_predictor.feature_names else 0
+                }
+            }
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get ML status: {str(e)}",
         )
 
 

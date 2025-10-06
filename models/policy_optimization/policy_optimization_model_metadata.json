@@ -1,0 +1,37 @@
+{
+  "version": "1.0.0",
+  "trained_on": "2025-10-02T22:05:32.856741",
+  "model_type": "RandomForestRegressor",
+  "feature_names": [
+    "transaction_amount",
+    "transaction_frequency",
+    "avg_transaction_amount",
+    "loyalty_tier",
+    "time_of_day",
+    "day_of_week",
+    "seasonal_factor",
+    "competitive_pressure",
+    "cost_sensitivity",
+    "reward_preference",
+    "payment_method_age_days",
+    "account_age_days",
+    "previous_policy_success_rate",
+    "merchant_volume_tier",
+    "channel_online",
+    "channel_mobile",
+    "channel_in_store",
+    "segment_new",
+    "segment_regular",
+    "segment_vip",
+    "rail_ach",
+    "rail_debit",
+    "rail_credit",
+    "rail_bnpl"
+  ],
+  "performance_metrics": {
+    "r2_score": 0.82,
+    "mae": 0.12,
+    "rmse": 0.18
+  },
+  "training_samples": 5000
+}

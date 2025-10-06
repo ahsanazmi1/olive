@@ -6,14 +6,89 @@
 
 **Olive** is the **Loyalty and Incentives service** for the [Open Checkout Network (OCN)](https://github.com/ahsanazmi1/ocn-common).
 
-## Phase 2 — Explainability
+## Phase 4 — Payment Instruction & Visibility
 
-🚧 **Currently in development** - Phase 2 focuses on AI-powered explainability and human-readable loyalty decision reasoning.
+🚧 **Currently in development** - Phase 4 focuses on payment instruction generation, settlement visibility, and comprehensive payment tracking for loyalty operations.
 
-- **Status**: Active development on `phase-2-explainability` branch
-- **Features**: LLM integration, explainability API endpoints, decision audit trails
-- **Issue Tracker**: [Phase 2 Issues](https://github.com/ahsanazmi1/olive/issues?q=is%3Aopen+is%3Aissue+label%3Aphase-2)
-- **Timeline**: Weeks 4-8 of OCN development roadmap
+- **Status**: Active development on `phase-4-instruction` branch
+- **Features**: Payment instruction schemas, settlement visibility, payment tracking, instruction validation
+- **Issue Tracker**: [Phase 4 Issues](https://github.com/ahsanazmi1/olive/issues?q=is%3Aopen+is%3Aissue+label%3Aphase-4)
+- **Timeline**: Weeks 12-16 of OCN development roadmap
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed Phase 4 progress and features.
+
+### Enhanced Policy DSL
+
+Olive Phase 4 introduces a comprehensive Policy DSL for merchant routing rules, enabling sophisticated policy enforcement during Orca/Opal negotiations.
+
+#### DSL Syntax
+
+```yaml
+policy_id: "unique_policy_identifier"
+policy_name: "Human-readable policy name"
+description: "Policy description"
+
+# Legacy fields (backward compatible)
+prefer_rail: "ACH" | "DEBIT" | "CREDIT" | "BNPL" | "STABLECOIN" | "PREPAID"
+loyalty_rebate_pct: 0.0-100.0
+early_pay_discount_bps: 0.0-10000.0
+
+# Enhanced policy rules
+conditions:
+  - condition_type: "amount_range" | "time_window" | "merchant_category" | "customer_segment" | "payment_frequency" | "risk_level"
+    field: "field_name"
+    operator: "eq" | "gt" | "lt" | "gte" | "lte" | "in" | "between"
+    value: any_value
+    description: "Condition description"
+
+actions:
+  - action_type: "rail_preference" | "rebate_application" | "discount_application" | "loyalty_boost" | "tax_validation" | "early_pay_incentive"
+    parameters:
+      key: value
+    weight: 0.0-10.0
+    description: "Action description"
+
+# Merchant routing rules
+rebate_rules:
+  RAIL_TYPE: percentage_value
+early_pay_rules:
+  RAIL_TYPE: basis_points_value
+loyalty_incentives:
+  incentive_type: multiplier_value
+tax_validation_rules:
+  required: true/false
+  threshold: amount_value
+  jurisdictions: ["US", "CA"]
+
+# Policy enforcement
+enforcement_mode: "advisory" | "mandatory" | "override"
+override_threshold: 0.0-1.0
+
+# Metadata
+merchant_id: "merchant_identifier"
+priority: 1-10
+enabled: true/false
+effective_from: "ISO_datetime"
+effective_until: "ISO_datetime"
+```
+
+#### MCP Verbs
+
+Olive exposes the following MCP verbs for policy management:
+
+- **`setPolicy`**: Create or update a policy
+- **`getPolicy`**: Retrieve policies by ID or merchant
+- **`evaluatePolicies`**: Evaluate policies against transaction context
+- **`enforcePolicies`**: Enforce policies during negotiation
+
+#### Sample Configurations
+
+See `config/sample_policies.yaml` for comprehensive examples including:
+- Debit preference policies with conditions
+- Early payment bonus policies
+- ACH preference with loyalty incentives
+- Tax validation requirements
+- Multi-condition complex policies
 
 Olive provides intelligent loyalty programs and incentive management for the OCN ecosystem. Unlike traditional black-box loyalty systems, Olive offers:
 

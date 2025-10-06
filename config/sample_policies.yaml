@@ -1,5 +1,5 @@
-# Sample Policy DSL for Olive Service
-# This file demonstrates the Policy DSL format for merchant routing preferences
+# Enhanced Policy DSL for Olive Service Phase 4
+# This file demonstrates the enhanced Policy DSL format for merchant routing preferences
 
 - policy_id: merchant_001_debit_preference
   policy_name: "Debit Preference Policy"
@@ -12,6 +12,47 @@
   enabled: true
   effective_from: "2024-01-01T00:00:00Z"
   effective_until: "2024-12-31T23:59:59Z"
+  
+  # Enhanced policy rules
+  conditions:
+    - condition_type: "amount_range"
+      field: "transaction_amount"
+      operator: "gte"
+      value: 50.0
+      description: "Applies to transactions >= $50"
+    - condition_type: "time_window"
+      field: "transaction_time"
+      operator: "between"
+      value: [9, 17]
+      description: "Applies during business hours"
+  
+  actions:
+    - action_type: "rail_preference"
+      parameters:
+        rail_type: "DEBIT"
+        boost_value: 0.2
+      weight: 1.5
+      description: "Strong preference for debit rail"
+  
+  # Merchant routing rules
+  rebate_rules:
+    DEBIT: 2.0
+    ACH: 1.0
+    CREDIT: 0.5
+  early_pay_rules:
+    DEBIT: 100.0
+    ACH: 75.0
+  loyalty_incentives:
+    frequent_buyer: 1.3
+    premium_customer: 1.1
+  tax_validation_rules:
+    required: true
+    threshold: 100.0
+    jurisdictions: ["US", "CA"]
+  
+  # Policy enforcement
+  enforcement_mode: "advisory"
+  override_threshold: 0.7
 
 - policy_id: merchant_001_early_pay_bonus
   policy_name: "Early Payment Bonus Policy"
@@ -23,6 +64,45 @@
   enabled: true
   effective_from: "2024-01-01T00:00:00Z"
   effective_until: null
+  
+  # Enhanced policy rules
+  conditions:
+    - condition_type: "amount_range"
+      field: "transaction_amount"
+      operator: "between"
+      value: [100.0, 1000.0]
+      description: "Applies to transactions between $100-$1000"
+    - condition_type: "customer_segment"
+      field: "customer_tier"
+      operator: "in"
+      value: ["premium", "gold"]
+      description: "Applies to premium and gold customers"
+  
+  actions:
+    - action_type: "early_pay_incentive"
+      parameters:
+        rail_type: "ACH"
+        incentive_bps: 150.0
+      weight: 2.0
+      description: "Strong early pay incentive for ACH"
+    - action_type: "loyalty_boost"
+      parameters:
+        loyalty_type: "early_pay_customer"
+        boost_value: 0.3
+      weight: 1.2
+      description: "Loyalty boost for early pay customers"
+  
+  # Merchant routing rules
+  early_pay_rules:
+    ACH: 150.0
+    DEBIT: 100.0
+  loyalty_incentives:
+    early_pay_customer: 1.5
+    premium_customer: 1.2
+  
+  # Policy enforcement
+  enforcement_mode: "mandatory"
+  override_threshold: 0.8
 
 - policy_id: merchant_002_ach_preference
   policy_name: "ACH Preference Policy"
@@ -58,3 +138,4 @@
   enabled: true
   effective_from: "2024-01-01T00:00:00Z"
   effective_until: null
+

@@ -19,6 +19,48 @@ class RailType(str, Enum):
     ACH = "ACH"
     DEBIT = "debit"
     CREDIT = "credit"
+    BNPL = "bnpl"
+    STABLECOIN = "stablecoin"
+    PREPAID = "prepaid"
+
+
+class PolicyConditionType(str, Enum):
+    """Types of policy conditions."""
+    AMOUNT_RANGE = "amount_range"
+    TIME_WINDOW = "time_window"
+    MERCHANT_CATEGORY = "merchant_category"
+    CUSTOMER_SEGMENT = "customer_segment"
+    PAYMENT_FREQUENCY = "payment_frequency"
+    RISK_LEVEL = "risk_level"
+
+
+class PolicyActionType(str, Enum):
+    """Types of policy actions."""
+    RAIL_PREFERENCE = "rail_preference"
+    REBATE_APPLICATION = "rebate_application"
+    DISCOUNT_APPLICATION = "discount_application"
+    LOYALTY_BOOST = "loyalty_boost"
+    TAX_VALIDATION = "tax_validation"
+    EARLY_PAY_INCENTIVE = "early_pay_incentive"
+
+
+class PolicyCondition(BaseModel):
+    """Policy condition for conditional policy application."""
+    
+    condition_type: PolicyConditionType = Field(..., description="Type of condition")
+    field: str = Field(..., description="Field to evaluate")
+    operator: str = Field(..., description="Comparison operator (eq, gt, lt, gte, lte, in, between)")
+    value: Any = Field(..., description="Value to compare against")
+    description: str = Field(..., description="Human-readable condition description")
+
+
+class PolicyAction(BaseModel):
+    """Policy action to be applied when conditions are met."""
+    
+    action_type: PolicyActionType = Field(..., description="Type of action")
+    parameters: Dict[str, Any] = Field(default_factory=dict, description="Action parameters")
+    weight: float = Field(1.0, description="Action weight/multiplier", ge=0.0, le=10.0)
+    description: str = Field(..., description="Human-readable action description")
 
 
 class PolicyDSL(BaseModel):
@@ -29,10 +71,24 @@ class PolicyDSL(BaseModel):
     policy_name: str = Field(..., description="Human-readable policy name")
     description: str = Field(..., description="Policy description")
     
-    # Policy rules
+    # Policy rules (legacy fields for backward compatibility)
     prefer_rail: Optional[RailType] = Field(None, description="Preferred rail type")
     loyalty_rebate_pct: float = Field(0.0, description="Loyalty rebate percentage", ge=0.0, le=100.0)
     early_pay_discount_bps: float = Field(0.0, description="Early payment discount in basis points", ge=0.0, le=10000.0)
+    
+    # Enhanced policy rules for Phase 4
+    conditions: List[PolicyCondition] = Field(default_factory=list, description="Policy conditions")
+    actions: List[PolicyAction] = Field(default_factory=list, description="Policy actions")
+    
+    # Merchant routing rules
+    rebate_rules: Dict[str, float] = Field(default_factory=dict, description="Rail-specific rebate percentages")
+    early_pay_rules: Dict[str, float] = Field(default_factory=dict, description="Rail-specific early pay discounts")
+    loyalty_incentives: Dict[str, float] = Field(default_factory=dict, description="Loyalty program incentives")
+    tax_validation_rules: Dict[str, Any] = Field(default_factory=dict, description="Tax validation requirements")
+    
+    # Policy enforcement settings
+    enforcement_mode: str = Field("advisory", description="Enforcement mode: advisory, mandatory, override")
+    override_threshold: float = Field(0.0, description="Threshold for policy override", ge=0.0, le=1.0)
     
     # Policy metadata
     merchant_id: Optional[str] = Field(None, description="Merchant this policy applies to")
@@ -221,3 +277,38 @@ def get_policy_storage() -> PolicyStorage:
     if _policy_storage is None:
         _policy_storage = PolicyStorage()
     return _policy_storage
+
+
+# Enhanced MCP Request Models for Phase 4
+
+class SetPolicyRequest(BaseModel):
+    """Request model for setting a policy."""
+    
+    policy: PolicyDSL = Field(..., description="Policy to set")
+    overwrite: bool = Field(False, description="Whether to overwrite existing policy")
+
+
+class GetPolicyRequest(BaseModel):
+    """Request model for getting a policy."""
+    
+    policy_id: Optional[str] = Field(None, description="Specific policy ID to get")
+    merchant_id: Optional[str] = Field(None, description="Merchant ID to get policies for")
+    enabled_only: bool = Field(True, description="Only return enabled policies")
+
+
+class EvaluatePoliciesRequest(BaseModel):
+    """Request model for evaluating policies."""
+    
+    evaluation_request: PolicyEvaluationRequest = Field(..., description="Policy evaluation request")
+    include_explanations: bool = Field(True, description="Include policy explanations in response")
+    enforce_mode: str = Field("advisory", description="Enforcement mode: advisory, mandatory, override")
+
+
+class PolicyEnforcementRequest(BaseModel):
+    """Request model for policy enforcement during negotiation."""
+    
+    merchant_id: str = Field(..., description="Merchant identifier")
+    negotiation_context: Dict[str, Any] = Field(..., description="Negotiation context from Orca/Opal")
+    trace_id: str = Field(..., description="Transaction trace ID")
+    enforcement_mode: str = Field("advisory", description="Enforcement mode")
+

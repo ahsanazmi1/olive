@@ -10,9 +10,17 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 # Import policy modules
-from src.olive.policies.models import PolicyDSL, get_policy_storage
+from src.olive.policies.models import (
+    PolicyDSL, 
+    get_policy_storage,
+    SetPolicyRequest,
+    GetPolicyRequest,
+    EvaluatePoliciesRequest,
+    PolicyEnforcementRequest
+)
 from src.olive.policies.loader import get_policy_loader
 from src.olive.policies.evaluator import get_policy_evaluator, PolicyEvaluationRequest
+from src.olive.policies.enhanced_evaluator import get_enhanced_evaluator
 
 logger = logging.getLogger(__name__)
 
@@ -359,5 +367,218 @@ async def evaluate_policies(args: Dict[str, Any]) -> MCPResponse:
             data={
                 "error": str(e),
                 "message": "Failed to evaluate policies"
+            }
+        )
+
+
+# Enhanced MCP Verb Handlers for Phase 4
+
+async def handle_set_policy(request: SetPolicyRequest) -> MCPResponse:
+    """Handle setPolicy MCP verb."""
+    try:
+        storage = get_policy_storage()
+        
+        # Check if policy already exists
+        existing_policy = storage.get_policy(request.policy.policy_id)
+        if existing_policy and not request.overwrite:
+            return MCPResponse(
+                success=False,
+                data={
+                    "error": f"Policy {request.policy.policy_id} already exists",
+                    "message": "Use overwrite=true to replace existing policy"
+                }
+            )
+        
+        # Store the policy
+        storage.set_policy(request.policy)
+        
+        logger.info(f"Policy {request.policy.policy_id} set successfully")
+        
+        return MCPResponse(
+            success=True,
+            data={
+                "policy_id": request.policy.policy_id,
+                "policy_name": request.policy.policy_name,
+                "merchant_id": request.policy.merchant_id,
+                "enforcement_mode": request.policy.enforcement_mode,
+                "message": "Policy set successfully"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error setting policy: {e}")
+        return MCPResponse(
+            success=False,
+            data={
+                "error": str(e),
+                "message": "Failed to set policy"
+            }
+        )
+
+
+async def handle_get_policy(request: GetPolicyRequest) -> MCPResponse:
+    """Handle getPolicy MCP verb."""
+    try:
+        storage = get_policy_storage()
+        
+        if request.policy_id:
+            # Get specific policy
+            policy = storage.get_policy(request.policy_id)
+            if not policy:
+                return MCPResponse(
+                    success=False,
+                    data={
+                        "error": f"Policy {request.policy_id} not found",
+                        "message": "Policy does not exist"
+                    }
+                )
+            
+            policies = [policy.dict()]
+        elif request.merchant_id:
+            # Get policies for merchant
+            policies = storage.get_policies_by_merchant(request.merchant_id)
+            if request.enabled_only:
+                policies = [p for p in policies if p.enabled]
+            policies = [p.dict() for p in policies]
+        else:
+            # Get all policies
+            all_policies = storage.get_all_policies()
+            if request.enabled_only:
+                all_policies = [p for p in all_policies if p.enabled]
+            policies = [p.dict() for p in all_policies]
+        
+        return MCPResponse(
+            success=True,
+            data={
+                "policies": policies,
+                "count": len(policies),
+                "message": f"Retrieved {len(policies)} policies"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting policies: {e}")
+        return MCPResponse(
+            success=False,
+            data={
+                "error": str(e),
+                "message": "Failed to get policies"
+            }
+        )
+
+
+async def handle_evaluate_policies_enhanced(request: EvaluatePoliciesRequest) -> MCPResponse:
+    """Handle evaluatePolicies MCP verb with enhanced functionality."""
+    try:
+        enhanced_evaluator = get_enhanced_evaluator()
+        
+        # Evaluate policies with enhanced evaluator
+        response = enhanced_evaluator.evaluate_policies_enhanced(request.evaluation_request)
+        
+        # Convert adjustments to dictionaries
+        adjustment_dicts = []
+        for adjustment in response.adjustments:
+            adjustment_dicts.append({
+                "policy_id": adjustment.policy_id,
+                "adjustment_type": adjustment.adjustment_type,
+                "rail_type": adjustment.rail_type,
+                "adjustment_value": adjustment.adjustment_value,
+                "description": adjustment.description
+            })
+        
+        return MCPResponse(
+            success=True,
+            data={
+                "adjustments": adjustment_dicts,
+                "updated_scores": response.updated_scores,
+                "evaluation_metadata": response.evaluation_metadata,
+                "message": "Enhanced policy evaluation completed successfully"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in enhanced policy evaluation: {e}")
+        return MCPResponse(
+            success=False,
+            data={
+                "error": str(e),
+                "message": "Failed to evaluate policies with enhanced evaluator"
+            }
+        )
+
+
+async def handle_enforce_policies(request: PolicyEnforcementRequest) -> MCPResponse:
+    """Handle policy enforcement during negotiation."""
+    try:
+        enhanced_evaluator = get_enhanced_evaluator()
+        
+        # Enforce policies during negotiation
+        enforcement_results = enhanced_evaluator.enforce_policies_during_negotiation(request)
+        
+        return MCPResponse(
+            success=True,
+            data={
+                "enforcement_results": enforcement_results,
+                "message": "Policy enforcement completed successfully"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error enforcing policies: {e}")
+        return MCPResponse(
+            success=False,
+            data={
+                "error": str(e),
+                "message": "Failed to enforce policies during negotiation"
+            }
+        )
+
+
+# Enhanced MCP verb dispatcher
+async def handle_mcp_request_enhanced(request: MCPRequest) -> MCPResponse:
+    """Handle MCP requests with enhanced verb support."""
+    
+    verb_handlers = {
+        "setPolicy": handle_set_policy,
+        "getPolicy": handle_get_policy,
+        "evaluatePolicies": handle_evaluate_policies_enhanced,
+        "enforcePolicies": handle_enforce_policies,
+    }
+    
+    handler = verb_handlers.get(request.verb)
+    if not handler:
+        return MCPResponse(
+            success=False,
+            data={
+                "error": f"Unknown verb: {request.verb}",
+                "supported_verbs": list(verb_handlers.keys()),
+                "message": "Verb not supported"
+            }
+        )
+    
+    try:
+        # Parse request args based on verb
+        if request.verb == "setPolicy":
+            policy_request = SetPolicyRequest(**request.args)
+            return await handler(policy_request)
+        elif request.verb == "getPolicy":
+            get_request = GetPolicyRequest(**request.args)
+            return await handler(get_request)
+        elif request.verb == "evaluatePolicies":
+            eval_request = EvaluatePoliciesRequest(**request.args)
+            return await handler(eval_request)
+        elif request.verb == "enforcePolicies":
+            enforce_request = PolicyEnforcementRequest(**request.args)
+            return await handler(enforce_request)
+        else:
+            return await handler(request.args)
+            
+    except Exception as e:
+        logger.error(f"Error handling MCP request {request.verb}: {e}")
+        return MCPResponse(
+            success=False,
+            data={
+                "error": str(e),
+                "message": f"Failed to handle {request.verb} request"
             }
         )
